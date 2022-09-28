@@ -88,6 +88,25 @@ app.get("/", async (req, res, next) => {
   res.send({ message: "Awesome it works 🐻" });
 });
 
+// create user
+app.post("/api/user", async (req, res, next) => {
+  try {
+    const { name, email, password } = req.body;
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+    });
+
+    res.send(user);
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.post("/api/authenticate", async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -224,6 +243,7 @@ app.delete("/api/posts/:id", async (req, res, next) => {
     }
 
     if (post.user != user._id) {
+      console.log(post.user, user._id);
       throw createError(401, "Unauthorized");
     }
 
@@ -251,10 +271,15 @@ app.post("/api/like/:id", async (req, res, next) => {
       throw createError(404, "Post not found");
     }
 
-    post.likes.push(user._id);
-    await post.save();
+    // If the user has already liked the post
+    if (post.likes.includes(user._id)) {
+      throw createError(400, "Post already liked");
+    } else {
+      post.likes.push(user._id);
+      await post.save();
+    }
 
-    res.send({ message: "Liked successfully" });
+    res.send({ message: "Post Liked successfully" });
   } catch (error) {
     next(error);
   }
@@ -276,8 +301,13 @@ app.post("/api/unlike/:id", async (req, res, next) => {
       throw createError(404, "Post not found");
     }
 
-    post.likes = post.likes.filter((item) => item != user._id);
-    await post.save();
+    // If the user hasnt liked the post
+    if (!post.likes.includes(user._id)) {
+      throw createError(400, "Post not liked");
+    } else {
+      post.likes = post.likes.filter((item) => item != user._id);
+      await post.save();
+    }
 
     res.send({ message: "Unliked successfully" });
   } catch (error) {
@@ -311,7 +341,7 @@ app.post("/api/comment/:id", async (req, res, next) => {
     post.comments.push(comment._id);
     await post.save();
 
-    res.send({ message: "Commented successfully" });
+    res.send({ message: "Commented on the post successfully" });
   } catch (error) {
     next(error);
   }

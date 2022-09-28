@@ -1,17 +1,6 @@
 const { expect } = require("chai");
 const { describe, it } = require("mocha");
-const { User } = require("../models/index");
-const { Post } = require("../models/index");
-
-const mongoose = require("mongoose");
-
-mongoose
-  .connect("mongodb://localhost:27017/test", {
-    useCreateIndex: true,
-    useNewUrlParser: true,
-  })
-  .then(() => console.log("Connected to MongoDB..."))
-  .catch((err) => console.error("Could not connect to MongoDB..."));
+const { User, Post, Comment } = require("../models/index");
 
 // Post successful creation check
 // api/posts/
